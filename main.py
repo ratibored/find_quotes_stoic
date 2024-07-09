@@ -1,15 +1,25 @@
-from flask import Flask, request, jsonify
-from flask_cors import CORS
+from flask import Flask, request, jsonify, send_from_directory
 import pandas as pd
-import numpy as np
 from sentence_transformers import util
 from sentence_transformers import SentenceTransformer
+import torch
+import os
+from flask_cors import CORS
 
-app = Flask(__name__)
-CORS(app, resources={r"/*": {"origins": "*"}})
+app = Flask(__name__, static_folder='static')
+CORS(app)
 
-model = SentenceTransformer('sentence-transformers/paraphrase-multilingual-mpnet-base-v2')
-df = pd.read_pickle('embedded_citations.pkl')
+# Указание полного пути к файлу embedded_citations.feather
+file_path = os.path.join(os.path.dirname(__file__), 'embedded_citations.feather')
+
+# Явно указываем устройство на CPU
+device = torch.device('cpu')
+model = SentenceTransformer('sentence-transformers/paraphrase-multilingual-mpnet-base-v2', device=device) # cointegrated/rubert-tiny2 - слабее, но быстрее и легковеснее
+df = pd.read_feather(file_path)
+
+@app.route('/')
+def serve_index():
+    return send_from_directory(app.static_folder, 'index.html')
 
 @app.route("/quotes/", methods=["POST"])
 def get_similar_quotes():
