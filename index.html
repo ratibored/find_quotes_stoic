@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Цитаты</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f0f0f0;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            text-align: center;
+        }
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            margin-bottom: 20px;
+        }
+        .input-group input {
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            margin-bottom: 10px;
+        }
+        .input-group button {
+            padding: 10px 20px;
+            border: none;
+            background-color: #28a745;
+            color: white;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+        .input-group button:disabled {
+            background-color: #6c757d;
+        }
+        .progress-bar {
+            width: 100%;
+            background-color: #f3f3f3;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-bottom: 20px;
+            display: none;
+        }
+        .progress-bar div {
+            height: 20px;
+            width: 0;
+            background-color: #28a745;
+        }
+        .quotes {
+            list-style: none;
+            padding: 0;
+            display: none;
+        }
+        .quotes li {
+            background: #e9ecef;
+            padding: 10px;
+            margin-bottom: 10px;
+            border-radius: 4px;
+        }
+        @media (min-width: 600px) {
+            .input-group {
+                flex-direction: row;
+            }
+            .input-group input {
+                flex: 1;
+                margin-bottom: 0;
+                margin-right: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Введите свою цитату</h1>
+        <div class="input-group">
+            <input type="text" id="quoteInput" placeholder="Введите цитату">
+            <button id="submitBtn" onclick="submitQuote()">Отправить</button>
+        </div>
+        <div class="progress-bar" id="progressBar">
+            <div></div>
+        </div>
+        <ul class="quotes" id="quoteList">
+        </ul>
+    </div>
+
+    <script>
+async function submitQuote() {
+    const input = document.getElementById('quoteInput');
+    const quoteList = document.getElementById('quoteList');
+    const progressBar = document.getElementById('progressBar');
+    const submitBtn = document.getElementById('submitBtn');
+
+    if (!input.value.trim()) return;
+
+    progressBar.style.display = 'block';
+    submitBtn.disabled = true;
+
+    let progress = 0;
+    const progressInterval = setInterval(() => {
+        progress += 10;
+        progressBar.firstElementChild.style.width = progress + '%';
+        if (progress >= 100) {
+            clearInterval(progressInterval);
+            progressBar.style.display = 'none';
+            progressBar.firstElementChild.style.width = '0';
+            submitBtn.disabled = false;
+
+            // Отправка цитаты на сервер
+            fetch('http://127.0.0.1:5000/quotes/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ quote: input.value })
+            })
+            .then(response => {
+                console.log('Response status:', response.status); // Добавляем лог статуса ответа
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                console.log('Response data:', data); // Логируем данные ответа
+                // Обновление списка цитат на основе данных с сервера
+                quoteList.innerHTML = '';
+                data.quotes.forEach(item => {
+                    const li = document.createElement('li');
+                    li.innerHTML = `<strong>Автор:</strong> ${item.author}<br><strong>Цитата:</strong> ${item.quote}<br><strong>Схожесть:</strong> ${item.similarity}%`;
+                    quoteList.appendChild(li);
+                });
+                quoteList.style.display = 'block';
+            })
+            .catch(error => {
+                console.error('Error:', error); // Логируем ошибку
+                alert('Произошла ошибка при отправке цитаты на сервер.');
+            });
+
+            input.value = '';
+        }
+    }, 100);
+}
+
+
+    </script>
+</body>
+</html>
