@@ -1,5 +1,8 @@
+fastapi
+pydantic
 pandas
 numpy
 sentence-transformers
 torch
 pysimplegui
+uvicorn
