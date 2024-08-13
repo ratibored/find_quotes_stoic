@@ -1,7 +1,7 @@
 fastapi
 pydantic
 pandas
-numpy
+numpy<2
 sentence-transformers
 torch
 pysimplegui
